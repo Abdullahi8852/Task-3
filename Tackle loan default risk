@@ -1,0 +1,61 @@
+To tackle loan default risk with business cost optimization, we'll break down the task into actionable steps.
+
+Step 1: Clean and Preprocess the Dataset
+First, load the Home Credit Default Risk Dataset and perform exploratory data analysis to understand the data distribution and relationships. Handle missing values, encode categorical variables, and scale/normalize numerical features as needed.
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+Load dataset
+df = pd.read_csv('home_credit_default_risk.csv')
+
+Preprocess data
+df = pd.get_dummies(df, columns=['categorical_column'])
+scaler = StandardScaler()
+df[['numerical_column1', 'numerical_column2']] = scaler.fit_transform(df[['numerical_column1', 'numerical_column2']])
+
+Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(df.drop('target', axis=1), df['target'], test_size=0.2, random_state=42)
+Step 2: Train Binary Classification Models
+Train models like Logistic Regression and CatBoost to predict loan default risk.
+from sklearn.linear_model import LogisticRegression
+from catboost import CatBoostClassifier
+
+Train Logistic Regression model
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train)
+
+Train CatBoost model
+catboost = CatBoostClassifier()
+catboost.fit(X_train, y_train)
+Step 3: Define Business Cost Values
+Assign costs to false positives (approving a risky loan) and false negatives (rejecting a good loan).
+
+- False Positive Cost: The cost of approving a loan that defaults, e.g., the loan amount.
+- False Negative Cost: The cost of rejecting a good loan, e.g., lost interest revenue.
+
+Step 4: Adjust Model Threshold
+Adjust the decision threshold to minimize total business cost. This involves calculating the predicted probabilities and applying different thresholds to determine the optimal cutoff.
+import numpy as np
+
+Predict probabilities
+y_pred_proba = logreg.predict_proba(X_test)[:, 1]
+
+Define cost values
+fp_cost = 10000  # False positive cost
+fn_cost = 500    # False negative cost
+
+Calculate total cost for different thresholds
+thresholds = np.linspace(0, 1, 100)
+total_costs = []
+
+for threshold in thresholds:
+    y_pred = (y_pred_proba >= threshold).astype(int)
+    fp = np.sum((y_pred == 1) & (y_test == 0))
+    fn = np.sum((y_pred == 0) & (y_test == 1))
+    total_cost = fp * fp_cost + fn * fn_cost
+    total_costs.append(total_cost)
+
+Find the optimal threshold
+optimal_threshold = thresholds[np.argmin(total_costs)]
+following these steps, you can develop a loan default risk prediction model that optimizes business costs by adjusting the decision threshold based on cost-benefit analysis.
